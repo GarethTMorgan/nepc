@@ -13,7 +13,9 @@ PARSER = argparse.ArgumentParser(description='Build the NEPC database.')
 PARSER.add_argument('--debug', action='store_true',
                     help='print additional debug info')
 PARSER.add_argument('--test', action='store_true',
-                    help='build test database')
+                    help='build test database on localhost')
+PARSER.add_argument('--travis', action='store_true',
+                    help='build test database on TravisCI')
 ARGS = PARSER.parse_args()
 
 if ARGS.debug:
@@ -23,24 +25,40 @@ else:
     MAX_CS = 2000000
     MAX_RATE = 2000000
 
+if ARGS.test and ARGS.travis:
+    raise Exception('can pass only --test or --travis, not both')
+
 if ARGS.test:
     database = 'nepc_test'
-    NEPC_DATA = config.nepc_home() + "/tests/data/"
-    DIR_NAMES = ["/cs/n2/fict/",
-                 "/cs/n2/fict_total/"]
+    NEPC_HOME = config.nepc_home()
+    NEPC_DATA = NEPC_HOME + "/tests/data/"
+    DIR_NAMES = ["/cs/lxcat/n2/fict/",
+                 "/cs/lumped/n2/fict_total/"]
+    HOME = config.user_home()
+    option_files = HOME + '/.mysql/defaults'
+elif ARGS.travis:
+    database = 'nepc_test'
+    NEPC_HOME = os.getcwd()
+    NEPC_DATA = NEPC_HOME + "/tests/data/"
+    DIR_NAMES = ["/cs/lxcat/n2/fict/",
+                 "/cs/lumped/n2/fict_total/"]
+    option_files = NEPC_HOME + '/nepc/mysql/defaults'
 else:
     database = 'nepc'
     NEPC_DATA = config.nepc_cs_home() + "/data/"
     DIR_NAMES = ["/cs/n2/itikawa/",
-                 "/cs/n2/zipf/",
                  "/cs/n/zatsarinny/",
-                 "/cs/n2/phelps/",
-                 "/cs/n2/phelps_total/",
-                 "/cs/n2/little/"]
+                 "/cs/lxcat/n2/phelps/",
+                 "/cs/lumped/n2/phelps_excitation_total/",
+                 "/cs/lumped/n2/phelps_excitation_total_e/",
+                 "/cs/lumped/n2/phelps_excitation_total_v/",
+                 "/cs/qdb/n2p/D19505/",
+                 "/cs/generated/n2/angus_dissociation/"]
+    HOME = config.user_home()
+    option_files = HOME + '/.mysql/defaults'
 
 T0 = time.time()
 
-HOME = config.user_home()
 
 
 def np_str(df, row, name):
@@ -89,7 +107,7 @@ def insert_command(table_name, variable_list):
 
 MYDB = mysql.connector.connect(
     host='localhost',
-    option_files=HOME + '/.mysql/defaults'
+    option_files=option_files
 )
 
 MYCURSOR = MYDB.cursor()

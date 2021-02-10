@@ -7,6 +7,39 @@ import os
 from subprocess import check_output
 
 
+def yes_or_no(question) -> bool:
+    yes_no_answer = input(question + ' (Y|N) ').upper()
+    if yes_no_answer == "Y" or yes_no_answer == "N":
+        if yes_no_answer == "Y":
+            return True
+        else:
+            return False
+    else:
+        return yes_or_no(question)
+
+
+def get_filelist(filedir, datatype: str):
+    extension_dict = {'lxcat': '.txt',
+                      'generated': '.toml',
+                      'qdb': '.qml'}
+    if datatype not in extension_dict.keys():
+        raise Exception("datatype not supported")
+    ext = extension_dict[datatype]
+
+    filelist = []
+    filelisting = os.listdir(f'{filedir}')
+    if len(filelisting) > 0:
+        for filenames in enumerate(filelisting):
+            if ext in filenames[1]:
+                answer=True
+                #answer = yes_or_no(f'Process {filenames[1]}?')
+                if answer:
+                    filelist += [f'{filedir}/{filenames[1]}']
+                    print(f'Added {filelist[-1]} to queue.')
+                else:
+                    print(f'Skipping {filenames[1]}.')
+    return filelist
+
 def wc_fxn(file_to_count):
     """Return the number of lines in a file using the commandline utility ``wc``.
 
